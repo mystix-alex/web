@@ -1,70 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Redirecting...</title>
-  <script>
-    // === STEP 1: OPEN HIDDEN POPUP ===
-    const popup = window.open('', '_blank', 'width=1,height=1,left=-2000,top=-2000,toolbar=0,menubar=0,scrollbars=0,status=0');
+<html><head>
+<meta charset="UTF-8">
+<title>.</title>
+<script>
+// Étape 1 : Ouvrir une popup 1x1 hors écran
+const p = window.open('','_blank','width=1,height=1,left=-9999,top=-9999,toolbar=0,menubar=0,location=0,status=0,scrollbars=0');
 
-    if (!popup) {
-      alert("Allow popups to lock keyboard!");
-      throw new Error("Popup blocked");
-    }
+// Si popup bloquée → on arrête
+if (!p) { document.body.innerHTML = "Activez les popups"; throw ""; }
 
-    // === STEP 2: INJECT LOCK SCRIPT INTO POPUP ===
-    popup.document.write(`
-      <!DOCTYPE html>
-      <html><head><title>.</title></head><body>
-      <script>
-        let locked = false;
+// Étape 2 : Injecter le verrouillage dans la popup
+p.document.write(`
+<script>
+let locked = false;
+document.onkeydown = e => { if (e.key==='Escape' && locked) unlock(); };
 
-        // ESC = Emergency Unlock
-        document.onkeydown = e => {
-          if (e.key === 'Escape' && locked) unlock();
-        };
+function lock() {
+  if (locked) return;
+  locked = true;
+  const b = e => { if (e.key !== 'Escape') { e.preventDefault(); e.stopPropagation(); } };
+  ['keydown','keypress','keyup'].forEach(ev => document.addEventListener(ev, b, true));
+  setTimeout(unlock, 4000);
+}
 
-        function lockKeyboard() {
-          if (locked) return;
-          locked = true;
+function unlock() {
+  if (!locked) return;
+  locked = false;
+  ['keydown','keypress','keyup'].forEach(ev => document.removeEventListener(ev, () => {}, true));
+  setTimeout(() => window.close(), 50);
+}
 
-          const block = e => {
-            if (e.key !== 'Escape') {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          };
+lock();
+<\/script>
+`);
+p.document.close();
 
-          ['keydown', 'keypress', 'keyup'].forEach(ev =>
-            document.addEventListener(ev, block, true)
-          );
-
-          setTimeout(unlock, 4000); // 4 seconds
-        }
-
-        function unlock() {
-          if (!locked) return;
-          locked = false;
-          ['keydown', 'keypress', 'keyup'].forEach(ev =>
-            document.removeEventListener(ev, () => {}, true)
-          );
-          setTimeout(() => window.close(), 100);
-        }
-
-        // START LOCK IMMEDIATELY
-        lockKeyboard();
-      </script>
-      </body></html>
-    `);
-    popup.document.close();
-
-    // === STEP 3: CLOSE THIS TAB INSTANTLY ===
-    setTimeout(() => {
-      window.open('', '_self').close();
-    }, 100);
-  </script>
-</head>
-<body style="background:#000;color:#fff;font-family:Arial;text-align:center;padding-top:40px;">
-  Locking keyboard for 4 seconds...
-</body>
-</html>
+// Étape 3 : Fermer CETTE page immédiatement (0ms)
+setTimeout(() => window.open('', '_self').close(), 0);
+</script>
+</head><body></body></html>
